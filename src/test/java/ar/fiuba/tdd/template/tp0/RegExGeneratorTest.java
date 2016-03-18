@@ -16,7 +16,7 @@ public class RegExGeneratorTest {
         List<String> results = generator.generate(regEx, numberOfResults);
         // force matching the beginning and the end of the strings
         Pattern pattern = Pattern.compile("^" + regEx + "$");
-        return results
+        boolean t = results
                 .stream()
                 .reduce(true,
                     (acc, item) -> {
@@ -24,6 +24,10 @@ public class RegExGeneratorTest {
                         return acc && matcher.find();
                     },
                     (item1, item2) -> item1 && item2);
+        if(!t){
+            System.out.println(results);
+        }
+        return t;
     }
 
     //TODO: Uncomment these tests

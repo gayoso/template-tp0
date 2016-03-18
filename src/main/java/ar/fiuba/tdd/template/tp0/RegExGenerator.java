@@ -68,44 +68,49 @@ public class RegExGenerator {
         return quantifier;
     }
 
-    private String generateCharsFromToken(ArrayList<Character> possible_chars, int quantifier){
-        String chars = "";
+    private StringBuffer generateCharsFromToken(ArrayList<Character> possible_chars, int quantifier){
+        StringBuffer chars = new StringBuffer("");
         Random rand = new Random();
         for (int q = 0; q < quantifier; ++q) {
             int index = rand.nextInt((possible_chars.size() - 0)) + 0;
             char char_to_add = possible_chars.get(index);
             if (char_to_add == '.') {
-                char_to_add = (char) (rand.nextInt((255 - 0) + 1) + 0);
+                char_to_add = (char) (rand.nextInt((255 - 32) + 1) + 32);
             }
-            chars = chars + Character.toString(char_to_add);
+            chars.append(char_to_add);
         }
 
         return chars;
     }
 
-    private void parseNextToken(String regEx, int numberOfResults, ArrayList<String> result){
+    private void parseNextToken(String regEx, int numberOfResults, ArrayList<StringBuffer> result){
         ArrayList<Character> possible_chars = getPossibleChars(regEx);
 
         int quantifier = getQuantifier(regEx);
 
         // agrego caracteres del elemento de la regex al string final
         for(int n = 0; n < numberOfResults; ++n) {
-            result.set(n, result.get(n) + generateCharsFromToken(possible_chars, quantifier));
+            result.set(n, result.get(n).append(generateCharsFromToken(possible_chars, quantifier)));
         }
     }
 
     public List<String> generate(String regEx, int numberOfResults) {
 
         // perparo array de resultados
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<StringBuffer> result = new ArrayList<StringBuffer>();
         for(int n = 0; n < numberOfResults; ++n){
-            result.add("");
+            result.add(new StringBuffer(""));
         }
 
         for( index = 0; index < regEx.length(); ++index){ // el for recorre los 'elementos' o 'tokens' de la regex, y tambien se fija su cuantificador
             parseNextToken(regEx, numberOfResults, result);
         }
 
-        return result;
+        ArrayList<String> result_as_string = new ArrayList<String>();
+        for(int i = 0; i < result.size(); ++i){
+            result_as_string.add(result.get(i).toString());
+        }
+
+        return result_as_string;
     }
 }
