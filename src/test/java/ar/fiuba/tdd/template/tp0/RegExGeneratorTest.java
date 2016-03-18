@@ -13,7 +13,7 @@ public class RegExGeneratorTest {
     private boolean validate(String regEx, int numberOfResults) {
         RegExGenerator generator = new RegExGenerator();
         // TODO: Uncomment parameters
-        List<String> results = generator.generate(/*regEx, numberOfResults*/);
+        List<String> results = generator.generate(regEx, numberOfResults);
         // force matching the beginning and the end of the strings
         Pattern pattern = Pattern.compile("^" + regEx + "$");
         return results
@@ -27,7 +27,7 @@ public class RegExGeneratorTest {
     }
 
     //TODO: Uncomment these tests
-    /*
+
     @Test
     public void testAnyCharacter() {
         assertTrue(validate(".", 1));
@@ -62,6 +62,21 @@ public class RegExGeneratorTest {
     public void testCharacterSetWithQuantifiers() {
         assertTrue(validate("[abc]+", 1));
     }
-    */
+
+    @Test
+    public void testQuantifierAsLiteral() {
+        assertTrue(validate("\\+", 2));
+    }
+
+    @Test
+    public void testLiteralDotSetWithQuantifiers() {
+        assertTrue(validate("r+.*[abc]?", 5));
+    }
+
+    @Test
+    public void testLiteralBackslash() {
+        assertTrue(validate("\\\\", 3));
+    }
+
     // TODO: Add more tests!!!
 }
