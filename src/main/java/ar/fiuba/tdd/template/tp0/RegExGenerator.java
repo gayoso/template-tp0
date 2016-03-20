@@ -18,49 +18,64 @@ public class RegExGenerator {
         this.maxLength = 5;
     }
 
-    private ArrayList<Character> getPossibleChars(String regEx){
-        // creo lista vacia de caracteres posibles a usar
-        ArrayList<Character> possible_chars = new ArrayList<Character>();
+    private ArrayList<Character> getPossibleChars(String regEx) {
+        ArrayList<Character> possibleChars = new ArrayList<Character>();
 
-        // armo lista de posibles segun el tipo de expresion (cualquier letra, lista, o literal)
-        if(regEx.charAt(index) == '.') {
-            possible_chars.add('.'); // serian todos, lo simulo con un if al final para no meter una lista con los 255 caracteres ASCII
-        } else if(regEx.charAt(index) == '['){
+        // here we assemble the lists of possible chars to match the token or list
+        if (regEx.charAt(index) == '.') {
+            possibleChars.add('.'); // instead of having a list of all possible chars, it is simulated later
+        } else if (regEx.charAt(index) == '[') {
             ++index;
-            while(index < regEx.length() && regEx.charAt(index) != ']'){
-                possible_chars.add(regEx.charAt(index));
+            while (index < regEx.length() && regEx.charAt(index) != ']') {
+                possibleChars.add(regEx.charAt(index));
                 ++index;
             }
         } else {
-            if(regEx.charAt(index) == '\\') {
+            if (regEx.charAt(index) == '\\') {
                 ++index;
             }
-            possible_chars.add(regEx.charAt(index));
+            possibleChars.add(regEx.charAt(index));
         }
 
-        return possible_chars;
+        return possibleChars;
     }
 
-    private int getQuantifier(String regEx){
-        // veo si hay quantifier, si no hay es 1
-        char posible_quant = 'a';
-        if(index+1 < regEx.length()) {
-            posible_quant = regEx.charAt(index + 1);
+    private int getMinFromPossibleQuantifier(char possibleQuantifier) {
+        switch (possibleQuantifier) {
+            case '*':
+                ++index;
+                return 0;
+            case '+':
+                ++index;
+                return 1;
+            case '?':
+                ++index;
+                return 0;
+            default:
+                return 1;
         }
-        int min = 1, max = 1;
-        if(posible_quant == '*'){
-            min = 0;
-            max = this.maxLength;
-            ++index;
-        } else if(posible_quant == '+'){
-            min = 1;
-            max = this.maxLength;
-            ++index;
-        } else if(posible_quant == '?'){
-            min = 0;
-            max = 1;
-            ++index;
+    }
+
+    private int getMaxFromPossibleQuantifier(char possibleQuantifier) {
+        switch (possibleQuantifier) {
+            case '*':
+                return this.maxLength;
+            case '+':
+                return this.maxLength;
+            case '?':
+                return 1;
+            default:
+                return 1;
         }
+    }
+
+    private int getQuantifier(String regEx) {
+        char possibleQuant = 'a';
+        if (index + 1 < regEx.length()) {
+            possibleQuant = regEx.charAt(index + 1);
+        }
+        int min = getMinFromPossibleQuantifier(possibleQuant);
+        int max = getMaxFromPossibleQuantifier(possibleQuant);
 
         Random rand = new Random();
         int quantifier = rand.nextInt((max - min) + 1) + min;
@@ -68,49 +83,53 @@ public class RegExGenerator {
         return quantifier;
     }
 
-    private StringBuffer generateCharsFromToken(ArrayList<Character> possible_chars, int quantifier){
+    private StringBuffer generateCharsFromToken(ArrayList<Character> possibleChars, int quantifier) {
         StringBuffer chars = new StringBuffer("");
         Random rand = new Random();
         for (int q = 0; q < quantifier; ++q) {
-            int index = rand.nextInt((possible_chars.size() - 0)) + 0;
-            char char_to_add = possible_chars.get(index);
-            if (char_to_add == '.') {
-                char_to_add = (char) (rand.nextInt((255 - 32) + 1) + 32);
+            int index = rand.nextInt((possibleChars.size() - 0)) + 0;
+            char charToAdd = possibleChars.get(index);
+            if (charToAdd == '.') {
+                charToAdd = (char) (rand.nextInt((255 - 32) + 1) + 32);
             }
-            chars.append(char_to_add);
+            chars.append(charToAdd);
         }
 
         return chars;
     }
 
-    private void parseNextToken(String regEx, int numberOfResults, ArrayList<StringBuffer> result){
-        ArrayList<Character> possible_chars = getPossibleChars(regEx);
+    private void parseNextToken(String regEx, int numberOfResults, ArrayList<StringBuffer> result) {
+        ArrayList<Character> possibleChars = getPossibleChars(regEx);
 
         int quantifier = getQuantifier(regEx);
 
-        // agrego caracteres del elemento de la regex al string final
-        for(int n = 0; n < numberOfResults; ++n) {
-            result.set(n, result.get(n).append(generateCharsFromToken(possible_chars, quantifier)));
+        // adds the generatres charcters for the element to each result
+        for (int n = 0; n < numberOfResults; ++n) {
+            result.set(n, result.get(n).append(generateCharsFromToken(possibleChars, quantifier)));
         }
+    }
+
+    private ArrayList<String> stringBufferArrayToStringArray(ArrayList<StringBuffer> buf) {
+        ArrayList<String> resultAsString = new ArrayList<String>();
+        for (int i = 0; i < buf.size(); ++i) {
+            resultAsString.add(buf.get(i).toString());
+        }
+        return resultAsString;
     }
 
     public List<String> generate(String regEx, int numberOfResults) {
 
-        // perparo array de resultados
+        // initializes the results array
         ArrayList<StringBuffer> result = new ArrayList<StringBuffer>();
-        for(int n = 0; n < numberOfResults; ++n){
+        for (int n = 0; n < numberOfResults; ++n) {
             result.add(new StringBuffer(""));
         }
 
-        for( index = 0; index < regEx.length(); ++index){ // el for recorre los 'elementos' o 'tokens' de la regex, y tambien se fija su cuantificador
+        // loops through each 'element' (as in symbol + quantifier) and generates a valid expression for it
+        for (index = 0; index < regEx.length(); ++index) {
             parseNextToken(regEx, numberOfResults, result);
         }
 
-        ArrayList<String> result_as_string = new ArrayList<String>();
-        for(int i = 0; i < result.size(); ++i){
-            result_as_string.add(result.get(i).toString());
-        }
-
-        return result_as_string;
+        return stringBufferArrayToStringArray(result);
     }
 }
